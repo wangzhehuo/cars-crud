@@ -3,6 +3,9 @@ name: Cars CRUD Tests
 on:
   pull_request:
     branches: [main]
+ 
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -37,3 +40,25 @@ jobs:
 
       - name: Run E2E tests
         run: python -m pytest tests/e2e -q
+
+  publish:
+    needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download the repository
+        uses: actions/checkout@v7
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t mrkuangye/cars-crud:latest .
+
+      - name: Push Docker image
+        run: docker push mrkuangye/cars-crud:latest
